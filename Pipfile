@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 django = "*"
 django-vite = "*"
+pytz = "*"
+daphne = "*"
 
 [dev-packages]
 
