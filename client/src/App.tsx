@@ -1,35 +1,39 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+
+const eventSource = new EventSource("/stream/");
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [messages, setMessages] = useState<readonly string[]>([]);
+
+  function eventHandler(event: MessageEvent<any>) {
+    const data = event.data;
+
+    // CLOSE event is not in SSE specification
+    // this is just a convention that can be used to terminate a SSE stream
+    if (data === "CLOSE") {
+      eventSource.close();
+      return;
+    }
+
+    setMessages((previous) => [...previous, data]);
+  }
+
+  useEffect(() => {
+    eventSource.addEventListener("message", eventHandler);
+
+    return () => {
+      eventSource.removeEventListener("message", eventHandler);
+    };
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {messages.map((message, i) => {
+        return <p key={i}>{`${i}. ${message}`}</p>;
+      })}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
